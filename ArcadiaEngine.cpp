@@ -1,3 +1,4 @@
+
 // ArcadiaEngine.cpp - STUDENT TEMPLATE
 // TODO: Implement all the functions below according to the assignment requirements
 
@@ -24,23 +25,65 @@ using namespace std;
 
 class ConcretePlayerTable : public PlayerTable {
 private:
-    // TODO: Define your data structures here
-    // Hint: You'll need a hash table with double hashing collision resolution
+
+    static const int TABLE_SIZE = 101;
+
+    struct Player{
+        int playerID;
+        string name;
+        bool occupied;
+
+        Player() : playerID(-1) , name("") , occupied(false) {}
+    };
+
+    Player table[TABLE_SIZE];
+
+    // Primary Hash Function
+    int hash1(int key){
+        return key % TABLE_SIZE;
+    }
+
+    // Secondary Hash Function
+    int hash2(int key){
+        return 1 + (key % (TABLE_SIZE - 1));
+    }
 
 public:
     ConcretePlayerTable() {
-        // TODO: Initialize your hash table
+
     }
 
     void insert(int playerID, string name) override {
-        // TODO: Implement double hashing insert
-        // Remember to handle collisions using h1(key) + i * h2(key)
+
+        int idx1 = hash1(playerID);
+        int idx2 = hash2(playerID);
+
+        for(int i = 0 ; i < TABLE_SIZE; i++){
+            int idx = (idx1 + i * idx2) % TABLE_SIZE; // Formula of Double Hashing
+            if(!table[idx].occupied){
+                table[idx].playerID = playerID;
+                table[idx].name = name;
+                table[idx].occupied = true;
+                return;
+            }
+        }
+        cout << "The Table is Full.\n";
     }
 
     string search(int playerID) override {
-        // TODO: Implement double hashing search
-        // Return "" if player not found
-        return "";
+
+        int idx1 = hash1(playerID);
+        int idx2 = hash2(playerID);
+
+        for(int i = 0;i < TABLE_SIZE ; i++){
+            int idx = (idx1 + i * idx2) % TABLE_SIZE; // Formula of Double Hashing
+
+            if(table[idx].playerID == playerID){
+                return table[idx].name; // found
+            }
+        }
+
+        return "Not Found!\n"; // not found
     }
 };
 
@@ -164,15 +207,15 @@ int ServerKernel::minIntervals(vector<char>& tasks, int n) {
 // =========================================================
 
 extern "C" {
-    PlayerTable* createPlayerTable() { 
-        return new ConcretePlayerTable(); 
+    PlayerTable* createPlayerTable() {
+        return new ConcretePlayerTable();
     }
 
-    Leaderboard* createLeaderboard() { 
-        return new ConcreteLeaderboard(); 
+    Leaderboard* createLeaderboard() {
+        return new ConcreteLeaderboard();
     }
 
-    AuctionTree* createAuctionTree() { 
-        return new ConcreteAuctionTree(); 
+    AuctionTree* createAuctionTree() {
+        return new ConcreteAuctionTree();
     }
 }
