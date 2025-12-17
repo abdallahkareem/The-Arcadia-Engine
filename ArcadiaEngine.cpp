@@ -201,28 +201,275 @@ public:
     }
 };
 
-// --- 3. AuctionTree (Red-Black Tree) ---
+// =========================================================
+// PART A: DATA STRUCTURES (Concrete Implementations)
+// =========================================================
+#include <iostream>
+using namespace std;
+
+enum Color { RED, BLACK };
+
+// ---------------- NODE ----------------
+class Node {
+public:
+    int itemID;
+    int price;
+    Color color;
+    Node* left;
+    Node* right;
+    Node* parent;
+
+    Node(int id, int price) {
+        this->itemID = id;
+        this->price = price;
+        color = RED;
+        left = right = parent = nullptr;
+    }
+};
+
+// ---------------- RED-BLACK TREE ----------------
+class RBTree {
+private:
+    Node* root;
+    Node* NIL;
+
+    void leftRotate(Node* x) {
+        Node* y = x->right;
+        x->right = y->left;
+        if (y->left != NIL) y->left->parent = x;
+        y->parent = x->parent;
+        if (x->parent == nullptr) root = y;
+        else if (x == x->parent->left) x->parent->left = y;
+        else x->parent->right = y;
+        y->left = x;
+        x->parent = y;
+    }
+
+    void rightRotate(Node* x) {
+        Node* y = x->left;
+        x->left = y->right;
+        if (y->right != NIL) y->right->parent = x;
+        y->parent = x->parent;
+        if (x->parent == nullptr) root = y;
+        else if (x == x->parent->right) x->parent->right = y;
+        else x->parent->left = y;
+        y->right = x;
+        x->parent = y;
+    }
+
+    void bstInsert(Node* z) {
+        Node* y = nullptr;
+        Node* x = root;
+        while (x != NIL) {
+            y = x;
+            if (z->itemID < x->itemID) x = x->left;
+            else x = x->right;
+        }
+        z->parent = y;
+        if (y == nullptr) root = z;
+        else if (z->itemID < y->itemID) y->left = z;
+        else y->right = z;
+        z->left = z->right = NIL;
+    }
+
+    void fixInsert(Node* z) {
+        while (z->parent != nullptr && z->parent->color == RED) {
+            Node* parent = z->parent;
+            Node* grandparent = parent->parent;
+
+            if (parent == grandparent->left) {
+                Node* uncle = grandparent->right;
+                if (uncle->color == RED) {
+                    parent->color = BLACK;
+                    uncle->color = BLACK;
+                    grandparent->color = RED;
+                    z = grandparent;
+                }
+                else {
+                    if (z == parent->right) {
+                        z = parent;
+                        leftRotate(z);
+                    }
+                    parent->color = BLACK;
+                    grandparent->color = RED;
+                    rightRotate(grandparent);
+                }
+            }
+            else {
+                Node* uncle = grandparent->left;
+                if (uncle->color == RED) {
+                    parent->color = BLACK;
+                    uncle->color = BLACK;
+                    grandparent->color = RED;
+                    z = grandparent;
+                }
+                else {
+                    if (z == parent->left) {
+                        z = parent;
+                        rightRotate(z);
+                    }
+                    parent->color = BLACK;
+                    grandparent->color = RED;
+                    leftRotate(grandparent);
+                }
+            }
+        }
+        root->color = BLACK;
+    }
+
+    void transplant(Node* u, Node* v) {
+        if (u->parent == nullptr) root = v;
+        else if (u == u->parent->left) u->parent->left = v;
+        else u->parent->right = v;
+        v->parent = u->parent;
+    }
+
+    Node* minimum(Node* node) {
+        while (node->left != NIL) node = node->left;
+        return node;
+    }
+
+    void bstDelete(Node* z) {
+        Node* y = z;
+        Node* x;
+        Color yOriginalColor = y->color;
+
+        if (z->left == NIL) {
+            x = z->right;
+            transplant(z, z->right);
+        }
+        else if (z->right == NIL) {
+            x = z->left;
+            transplant(z, z->left);
+        }
+        else {
+            y = minimum(z->right);
+            yOriginalColor = y->color;
+            x = y->right;
+            if (y->parent == z) x->parent = y;
+            else {
+                transplant(y, y->right);
+                y->right = z->right;
+                y->right->parent = y;
+            }
+            transplant(z, y);
+            y->left = z->left;
+            y->left->parent = y;
+            y->color = z->color;
+        }
+        delete z;
+        if (yOriginalColor == BLACK) fixDelete(x);
+    }
+
+    void fixDelete(Node* x) {
+        while (x != root && x->color == BLACK) {
+            if (x == x->parent->left) {
+                Node* w = x->parent->right;
+                if (w->color == RED) {
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    leftRotate(x->parent);
+                    w = x->parent->right;
+                }
+                if (w->left->color == BLACK && w->right->color == BLACK) {
+                    w->color = RED;
+                    x = x->parent;
+                }
+                else {
+                    if (w->right->color == BLACK) {
+                        w->left->color = BLACK;
+                        w->color = RED;
+                        rightRotate(w);
+                        w = x->parent->right;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->right->color = BLACK;
+                    leftRotate(x->parent);
+                    x = root;
+                }
+            }
+            else {
+                Node* w = x->parent->left;
+                if (w->color == RED) {
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    rightRotate(x->parent);
+                    w = x->parent->left;
+                }
+                if (w->left->color == BLACK && w->right->color == BLACK) {
+                    w->color = RED;
+                    x = x->parent;
+                }
+                else {
+                    if (w->left->color == BLACK) {
+                        w->right->color = BLACK;
+                        w->color = RED;
+                        leftRotate(w);
+                        w = x->parent->left;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->left->color = BLACK;
+                    rightRotate(x->parent);
+                    x = root;
+                }
+            }
+        }
+        x->color = BLACK;
+    }
+
+public:
+    RBTree() {
+        NIL = new Node(0, 0);
+        NIL->color = BLACK;
+        NIL->left = NIL->right = NIL->parent = nullptr;
+        root = NIL;
+    }
+
+    void insert(int itemID, int price) {
+        Node* z = new Node(itemID, price);
+        z->left = z->right = NIL;
+        bstInsert(z);
+        fixInsert(z);
+    }
+
+    void remove(int itemID) {
+        Node* current = root;
+        while (current != NIL) {
+            if (itemID == current->itemID) break;
+            else if (itemID < current->itemID) current = current->left;
+            else current = current->right;
+        }
+        if (current != NIL) bstDelete(current);
+    }
+};
+
+// ---------------- CONCRETE AUCTION TREE ----------------
+class AuctionTree {
+public:
+    virtual void insertItem(int itemID, int price) = 0;
+    virtual void deleteItem(int itemID) = 0;
+};
 
 class ConcreteAuctionTree : public AuctionTree {
 private:
-    // TODO: Define your Red-Black Tree node structure
-    // Hint: Each node needs: id, price, color, left, right, parent pointers
-
+    RBTree tree;  // Using RBTree internally
 public:
-    ConcreteAuctionTree() {
-        // TODO: Initialize your Red-Black Tree
-    }
+    ConcreteAuctionTree() {}
 
     void insertItem(int itemID, int price) override {
-        // TODO: Implement Red-Black Tree insertion
-        // Remember to maintain RB-Tree properties with rotations and recoloring
+        tree.insert(itemID, price);
     }
 
     void deleteItem(int itemID) override {
-        // TODO: Implement Red-Black Tree deletion
-        // This is complex - handle all cases carefully
+        tree.remove(itemID);
     }
 };
+
+
+
+
 
 // =========================================================
 // PART B: INVENTORY SYSTEM (Dynamic Programming)
