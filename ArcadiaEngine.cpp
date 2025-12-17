@@ -15,8 +15,14 @@
 #include <map>
 #include <set>
 
+#define C first
+#define U second.first
+#define V second.second
+
+
 using namespace std;
 
+typedef pair<long long, pair<int,int>> edge;
 // =========================================================
 // PART A: DATA STRUCTURES (Concrete Implementations)
 // =========================================================
@@ -92,7 +98,7 @@ public:
 class ConcreteLeaderboard : public Leaderboard {
 private:
 
-    static const int MAX_LEVEL = 20;
+    static const int MAX_LEVEL = 16;
 
     const float prob = 0.5;
 
@@ -201,11 +207,7 @@ public:
     }
 };
 
-// =========================================================
-// PART A: DATA STRUCTURES (Concrete Implementations)
-// =========================================================
-#include <iostream>
-using namespace std;
+// --- 3. AuctionTree (Red-Black Tree) ---
 
 enum Color { RED, BLACK };
 
@@ -445,13 +447,6 @@ public:
     }
 };
 
-// ---------------- CONCRETE AUCTION TREE ----------------
-class AuctionTree {
-public:
-    virtual void insertItem(int itemID, int price) = 0;
-    virtual void deleteItem(int itemID) = 0;
-};
-
 class ConcreteAuctionTree : public AuctionTree {
 private:
     RBTree tree;  // Using RBTree internally
@@ -466,10 +461,6 @@ public:
         tree.remove(itemID);
     }
 };
-
-
-
-
 
 // =========================================================
 // PART B: INVENTORY SYSTEM (Dynamic Programming)
@@ -537,14 +528,92 @@ bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, i
     return false;
 }
 
+// =======================
+// Union-Find (Disjoint Set)
+// =======================
+vector<int> parent, rankSet;
+
+void makeSet(int n) {
+    parent.resize(n);
+    rankSet.assign(n, 0);
+    for (int i = 0; i < n; i++)
+        parent[i] = i;
+}
+
+int findSet(int u) {
+    if (parent[u] == u)
+        return u;
+    return parent[u] = findSet(parent[u]); // path compression
+}
+
+void unite(int u, int v) {
+    u = findSet(u);
+    v = findSet(v);
+    if (u == v) return;
+
+    if (rankSet[u] < rankSet[v])
+        parent[u] = v;
+    else if (rankSet[u] > rankSet[v])
+        parent[v] = u;
+    else {
+        parent[v] = u;
+        rankSet[u]++;
+    }
+}
+
+bool sameSet(int u, int v) {
+    return findSet(u) == findSet(v);
+}
+
+
 long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate,
                                        vector<vector<int>>& roadData) {
-    // TODO: Implement Minimum Spanning Tree (Kruskal's or Prim's)
-    // roadData[i] = {u, v, goldCost, silverCost}
-    // Total cost = goldCost * goldRate + silverCost * silverRate
-    // Return -1 if graph cannot be fully connected
-    return -1;
+
+
+    vector<edge> edgeList;
+
+    for (int i = 0; i < m; i++) {
+        int u = roadData[i][0];
+        int v = roadData[i][1];
+        int gold = roadData[i][2];
+        int silver = roadData[i][3];
+
+
+        long long cost = (long long)gold * goldRate + (long long)silver * silverRate;
+
+        edgeList.push_back({cost, {u, v}});
+    }
+
+    // -------------------
+    // Kruskal
+    // -------------------
+    sort(edgeList.begin(), edgeList.end());
+    makeSet(n);
+
+    long long mstCost = 0;
+    int edgesUsed = 0;
+
+    for (auto &e : edgeList) {
+        int u = e.second.first;
+        int v = e.second.second;
+        long long cost = e.first;
+
+        if (!sameSet(u, v)) {
+            unite(u, v);
+            mstCost += cost;
+            edgesUsed++;
+        }
+
+        if (edgesUsed == n - 1)
+            break;
+    }
+
+    if (edgesUsed != n - 1) return -1;
+
+    return mstCost;
 }
+
+
 
 string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
     // TODO: Implement All-Pairs Shortest Path (Floyd-Warshall)
