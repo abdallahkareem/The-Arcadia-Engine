@@ -199,51 +199,12 @@ int main() {
     cout << "Arcadia Engine - Student Happy Path Tests" << endl;
     cout << "-----------------------------------------" << endl;
 
-    Leaderboard* leaderboard = createLeaderboard();
+    test_PartA_DataStructures();
+    test_PartB_Inventory();
+    test_PartC_Navigator();
+    test_PartD_Kernel();
 
-
-    leaderboard->addScore(1, 100);
-    leaderboard->addScore(2, 90);
-    leaderboard->addScore(3, 80);
-    leaderboard->addScore(4, 70);
-    leaderboard->addScore(5, 60);
-
-
-    vector<int> top3 = leaderboard->getTopN(3);
-    cout << "Top 3 players: ";
-    for (int id : top3) cout << id << " ";
-    cout << endl;
-
-
-
-    leaderboard->addScore(3, 50);
-    vector<int> top3_after = leaderboard->getTopN(3);
-    cout << "Top 3 after updating player 3: ";
-    for (int id : top3_after) cout << id << " ";
-    cout << endl;
-
-    leaderboard->removePlayer(1);
-    vector<int> top3_after_remove = leaderboard->getTopN(3);
-    cout << "Top 3 after removing player 1: ";
-    for (int id : top3_after_remove) cout << id << " ";
-    cout << endl;
-
-    vector<int> top10 = leaderboard->getTopN(10);
-    cout << "Top 10 players: ";
-    for (int id : top10) cout << id << " ";
-    cout << endl;
-
-    delete leaderboard;
-
-    PlayerTable* table = createPlayerTable();
-
-    table->insert(70, "Abdallah");
-    table->insert(80, "Hady");
-    table->insert(7, "Reyad");
-
-    cout << table->search(80);
-
-    delete table; // avoid memory leak
+    runner.printSummary();
 
     return 0;
 }
