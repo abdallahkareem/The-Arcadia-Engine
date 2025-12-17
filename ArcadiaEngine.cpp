@@ -255,8 +255,38 @@ long long InventorySystem::countStringPossibilities(string s) {
 // =========================================================
 
 bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, int dest) {
-    // TODO: Implement path existence check using BFS or DFS
-    // edges are bidirectional
+    // BFS
+    // define the Adjacency list
+    vector<vector<int>> adj(n);
+
+    for(auto &e: edges){
+        int u = e[0],v = e[1];
+        // bidirectional Graph
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    vector <int> visited(n,false);
+    visited[source] = true;
+    queue<int> q;
+    q.push(source);
+
+    while(!q.empty()){ // nodes not visited
+        int u = q.front();
+        q.pop();
+
+        if(u == dest){
+            return true;
+        }
+
+        for(int v : adj[u]){ // neighbours of u
+            if(!visited[v]){
+                visited[v] = true;
+                q.push(v);
+            }
+        }
+    }
+
     return false;
 }
 
