@@ -14,6 +14,7 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include<queue>
 
 #define C first
 #define U second.first
@@ -628,12 +629,44 @@ string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) 
 // =========================================================
 
 int ServerKernel::minIntervals(vector<char>& tasks, int n) {
-    // TODO: Implement task scheduler with cooling time
-    // Same task must wait 'n' intervals before running again
-    // Return minimum total intervals needed (including idle time)
-    // Hint: Use greedy approach with frequency counting
-    return 0;
+
+    priority_queue<int> Maxheap;
+    queue<pair<int, int>> waiting;
+
+    int freq[26] = { 0 };
+    int timer = 0;
+
+   
+    for (char c : tasks) {
+        freq[c - 'A']++;
+    }
+
+    
+    for (int i = 0; i < 26; i++) {
+        if (freq[i] > 0)
+            Maxheap.push(freq[i]);
+    }
+
+    while (!Maxheap.empty() || !waiting.empty()) {
+
+        if (!waiting.empty() && waiting.front().second == timer) {
+            Maxheap.push(waiting.front().first);
+            waiting.pop();
+        }
+        if (!Maxheap.empty()) {
+            int temp = Maxheap.top();
+            Maxheap.pop();
+            temp--;
+            if (temp > 0) {
+                waiting.push({ temp, timer + n + 1 });
+            }
+        }
+        timer++;
+    }
+
+    return timer;
 }
+
 
 // =========================================================
 // FACTORY FUNCTIONS (Required for Testing)
