@@ -1,10 +1,7 @@
-
-// ArcadiaEngine.cpp - STUDENT TEMPLATE
-// TODO: Implement all the functions below according to the assignment requirements
-
 #include "ArcadiaEngine.h"
 #include <algorithm>
 #include <queue>
+#include <cstring>
 #include <numeric>
 #include <climits>
 #include <cmath>
@@ -14,7 +11,6 @@
 #include <iostream>
 #include <map>
 #include <set>
-#include<queue>
 
 #define C first
 #define U second.first
@@ -475,10 +471,49 @@ int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
 }
 
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& items) {
-    // TODO: Implement 0/1 Knapsack using DP
-    // items = {weight, value} pairs
-    // Return maximum value achievable within capacity
-    return 0;
+
+    // n is the number of items
+    // the first index in each item is the weight if the item
+    // the second index in each item is the value of the item
+
+    int n = items.size();
+    int weights[n+1];
+    int values[n+1];
+
+    //filling the weights and values array with the passed data
+    weights[0] = 0;
+    values[0] = 0;
+    for (int i = 1; i <= n; ++i) {
+        weights[i] = items[i - 1].first;
+        values[i] = items[i - 1].second;
+    }
+
+
+    //filling each cell in the matrix with the prober data
+    int matrix[n+1][capacity+1];
+
+    // initialize first row and column as zeros
+
+    for(int i = 0; i <= n;i++){
+        matrix[0][i] = 0;
+    }
+    for(int i = 0; i <= n;i++){
+        matrix[i][0] = 0;
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= capacity; ++j) {
+            if (i==1 || j==1)
+                matrix[i][j] = 0;
+            else if (weights[i] > j)
+                matrix[i][j] = matrix[i-1][j];
+            else
+                matrix[i][j] = max(matrix[i-1][j] , matrix[i-1][j-weights[i]] + values[i]);
+        }
+    }
+
+    return matrix[n][capacity];
+
 }
 
 long long InventorySystem::countStringPossibilities(string s) {
@@ -585,9 +620,7 @@ long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long lo
         edgeList.push_back({cost, {u, v}});
     }
 
-    // -------------------
-    // Kruskal
-    // -------------------
+    // Kruskal Algorithm using DSU
     sort(edgeList.begin(), edgeList.end());
     makeSet(n);
 
@@ -617,11 +650,58 @@ long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long lo
 
 
 string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
-    // TODO: Implement All-Pairs Shortest Path (Floyd-Warshall)
-    // Sum all shortest distances between unique pairs (i < j)
-    // Return the sum as a binary string
-    // Hint: Handle large numbers carefully
-    return "0";
+
+    const long long inf = 0x3f3f3f3f;
+    long long dist[n][n];
+    memset(dist,inf,sizeof dist);
+
+    for(int i = 0 ; i < n ;i++){
+        dist[i][i] = 0;
+
+    }
+
+    // store roads
+
+    for(auto &r : roads){
+        int u = r[0];
+        int v = r[1];
+        long long w = r[2];
+
+        dist[u][v] = min(dist[u][v], w);
+        dist[v][u] = min(dist[v][u], w);
+    }
+
+
+    // Floyd Warshall Algorithm O(V^3)
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (dist[i][k] < inf && dist[k][j] < inf) {
+                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+                }
+            }
+        }
+    }
+
+
+    long long sum = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (dist[i][j] < inf)
+                sum += dist[i][j];
+        }
+    }
+
+    if (sum == 0) return "0";
+
+    string binary = "";
+    while (sum > 0) {
+        binary = char('0' + (sum % 2)) + binary;
+        sum /= 2;
+    }
+
+    return binary;
+
 }
 
 // =========================================================
@@ -636,12 +716,12 @@ int ServerKernel::minIntervals(vector<char>& tasks, int n) {
     int freq[26] = { 0 };
     int timer = 0;
 
-   
+
     for (char c : tasks) {
         freq[c - 'A']++;
     }
 
-    
+
     for (int i = 0; i < 26; i++) {
         if (freq[i] > 0)
             Maxheap.push(freq[i]);
@@ -666,7 +746,6 @@ int ServerKernel::minIntervals(vector<char>& tasks, int n) {
 
     return timer;
 }
-
 
 // =========================================================
 // FACTORY FUNCTIONS (Required for Testing)
