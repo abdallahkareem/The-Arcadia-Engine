@@ -94,19 +94,16 @@ public:
 
 class ConcreteLeaderboard : public Leaderboard {
 private:
-
     static const int MAX_LEVEL = 16;
-
     const float prob = 0.5;
-
     int currentLevel;
 
-    struct Node{
+    struct Node {
         int playerID;
         int score;
         vector<Node*> forward;
 
-        Node(int id, int sc, int level){
+        Node(int id, int sc, int level) {
             playerID = id;
             score = sc;
             forward.resize(level + 1, nullptr);
@@ -115,53 +112,33 @@ private:
 
     Node* sentinal;
 
-    // Random level generator
     int randomLevel() {
         int level = 0;
-        while (((float)rand() / RAND_MAX) < prob && level < MAX_LEVEL) {
+        while (((float)rand() / RAND_MAX) < prob && level < MAX_LEVEL)
             level++;
-        }
         return level;
     }
 
+    // ORDER: score DESC, playerID ASC
+    bool comesBefore(Node* node, int score, int id) {
+        if (node->score != score)
+            return node->score > score;
+        return node->playerID < id;
+    }
 
 public:
     ConcreteLeaderboard() {
         currentLevel = 0;
-        sentinal = new Node(-1,INT_MAX,MAX_LEVEL);
+        sentinal = new Node(-1, INT_MAX, MAX_LEVEL);
     }
 
     void removePlayer(int playerID) override {
-    Node* current = sentinal;
-    vector<Node*> update(MAX_LEVEL + 1);
-
-    for (int i = currentLevel; i >= 0; i--) {
-        while (current->forward[i] && current->forward[i]->playerID != playerID && current->forward[i]->score > 0) {
-            current = current->forward[i];
-        }
-        update[i] = current;
-    }
-
-    current = current->forward[0];
-
-    if (current && current->playerID == playerID) {
-        for (int i = 0; i <= currentLevel; i++) {
-            if (update[i]->forward[i] != current) break;
-            update[i]->forward[i] = current->forward[i];
-        }
-        delete current;
-
-        while (currentLevel > 0 && sentinal->forward[currentLevel] == nullptr)
-            currentLevel--;
-    }
-}
-
-    void addScore(int playerID, int score) override {
         Node* current = sentinal;
         vector<Node*> update(MAX_LEVEL + 1);
 
         for (int i = currentLevel; i >= 0; i--) {
-            while (current->forward[i] && current->forward[i]->score > score) {
+            while (current->forward[i] &&
+                   current->forward[i]->playerID != playerID) {
                 current = current->forward[i];
             }
             update[i] = current;
@@ -170,18 +147,44 @@ public:
         current = current->forward[0];
 
         if (current && current->playerID == playerID) {
-            current->score += score;
+            for (int i = 0; i <= currentLevel; i++) {
+                if (update[i]->forward[i] != current) break;
+                update[i]->forward[i] = current->forward[i];
+            }
+            delete current;
 
+            while (currentLevel > 0 &&
+                   sentinal->forward[currentLevel] == nullptr)
+                currentLevel--;
+        }
+    }
+
+    void addScore(int playerID, int score) override {
+        Node* current = sentinal;
+        vector<Node*> update(MAX_LEVEL + 1);
+
+        for (int i = currentLevel; i >= 0; i--) {
+            while (current->forward[i] &&
+                   comesBefore(current->forward[i], score, playerID)) {
+                current = current->forward[i];
+            }
+            update[i] = current;
+        }
+
+        current = current->forward[0];
+
+        // Player exists → update score
+        if (current && current->playerID == playerID) {
+            int newScore = current->score + score;
             removePlayer(playerID);
-            addScore(playerID, current->score);
+            addScore(playerID, newScore);
             return;
         }
 
         int level = randomLevel();
         if (level > currentLevel) {
-            for (int i = currentLevel + 1; i <= level; i++) {
+            for (int i = currentLevel + 1; i <= level; i++)
                 update[i] = sentinal;
-            }
             currentLevel = level;
         }
 
@@ -191,7 +194,6 @@ public:
             update[i]->forward[i] = newNode;
         }
     }
-
 
     vector<int> getTopN(int n) override {
         vector<int> result;
@@ -764,4 +766,3 @@ extern "C" {
         return new ConcreteAuctionTree();
     }
 }
-
