@@ -540,12 +540,23 @@ int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& it
 }
 
 long long InventorySystem::countStringPossibilities(string s) {
-    // TODO: Implement string decoding DP
-    // Rules: "uu" can be decoded as "w" or "uu"
-    //        "nn" can be decoded as "m" or "nn"
-    // Count total possible decodings
-    return 0;
-}
+    int size = s.size();
+    const int MOD = 1e9 + 7;
+    vector<long long> dp(size + 1);
+    dp[0] = 1;
+    for (int i = 1; i <= size; i++) {
+        dp[i] = dp[i - 1] % MOD;
+
+        if (i >= 2) {
+            string lastTwo = s.substr(i - 2, 2);
+            if (lastTwo == "uu" || lastTwo == "nn") {
+                dp[i] = (dp[i] + dp[i - 2]) % MOD;
+            }
+        }
+    }
+
+    return dp[size];
+} 
 
 // =========================================================
 // PART C: WORLD NAVIGATOR (Graphs)
